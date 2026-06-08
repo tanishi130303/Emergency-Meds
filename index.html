@@ -128,6 +128,27 @@ main{padding:14px 14px 40px;max-width:760px;margin:0 auto}
 .scn .box.info{margin:10px 0 0}
 .box .h{display:block;font-size:11px;letter-spacing:.05em;margin-bottom:1px}
 
+.calc{background:var(--bg2);border:1px solid var(--start-line);border-radius:10px;padding:10px 12px;margin-top:10px}
+.calc-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.calc-top .lab{font-size:11px;font-weight:800;color:var(--start-txt);letter-spacing:.05em}
+.calc-w{width:78px;font-size:17px;font-weight:800;padding:5px 8px;border-radius:8px;
+  border:1px solid var(--start-line);background:var(--card);color:var(--txt);text-align:right;font-variant-numeric:tabular-nums}
+.calc-w:focus{outline:none;border-color:var(--start-txt)}
+.calc-top .unit{font-size:13px;color:var(--sub);font-weight:700;margin-left:-3px}
+.calc-out{margin-top:8px}
+.calc table{width:100%;border-collapse:collapse}
+.calc td{padding:6px 4px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:14px}
+.calc td:first-child{font-weight:700;width:30%}
+.calc td.rate{font-weight:800;font-size:16px;color:var(--start-txt);text-align:right;width:36%}
+.calc td.rate small{font-size:11px;font-weight:700}
+.calc td.rate .mgh{color:var(--dim);font-size:11px;font-weight:600;margin-top:1px}
+.calc td.route{text-align:right;width:26%}
+.calc tr.startrow td{background:var(--start-bg)}
+.calc .stb{font-size:10px;font-weight:800;color:var(--start-txt);background:var(--start-bg);border:1px solid var(--start-line);border-radius:5px;padding:1px 5px;margin-left:5px}
+.rt{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap}
+.rt-p{color:var(--start-txt);background:var(--start-bg);border:1px solid var(--start-line)}
+.rt-c{color:var(--tip-txt);background:var(--tip-bg);border:1px solid var(--tip-line)}
+.calc-note{font-size:13px;color:var(--dim);padding:4px 2px}
 .empty{text-align:center;color:var(--dim);padding:60px 20px;font-size:15px}
 footer{max-width:760px;margin:0 auto;padding:0 14px 40px;color:var(--dim);font-size:11.5px;line-height:1.7}
 footer .warnbar{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-txt);
@@ -141,7 +162,7 @@ footer .warnbar{background:var(--warn-bg);border:1px solid var(--warn-line);colo
     <h1>急変時 初期投与メニュー</h1>
     <button id="theme" aria-label="テーマ切替">☾</button>
   </div>
-  <div class="titlerow"><span class="meta">体重 50kg 想定 ／ ワンアクション目を太字</span><span class="meta tabnum" id="count"></span></div>
+  <div class="titlerow"><span class="meta">体重50kg想定（ノルアドのみ体重連動）</span><span class="meta tabnum" id="count"></span></div>
   <div class="searchwrap">
     <input id="search" type="search" placeholder="薬剤名・状況で検索（例: ノルアド, 敗血症, VT）" autocomplete="off">
     <button id="clear" aria-label="クリア">✕</button>
@@ -177,6 +198,10 @@ footer .warnbar{background:var(--warn-bg);border:1px solid var(--warn-line);colo
      titrate : 調整・漸増
      warn    : ⚠️注意（赤）
      tip     : 💡コツ（黄）
+     calc    : 体重連動の投与速度計算機（任意）。例: { conc:60, doses:[0.05,0.1,0.2,0.3,0.5], start:0.05, peripheralMax:0.1 }
+               conc=希釈後の濃度(µg/mL)、doses=表示するγ(µg/kg/min)、start=開始量(緑で強調)
+               peripheralMax=末梢で許容するγの上限（任意）。これ以下は「末梢可」、超は「要CV」と表示
+               計算式: mL/h = γ × 体重(kg) × 60 ÷ conc
      note    : 補足・適応
    ============================================================ */
 
@@ -284,9 +309,11 @@ const DATA = [
     drugs:[
       {
         name:"ノルアドレナリン", tag:"1st line",
-        prep:"3A(3mg/3mL) ＋ 生食47mL ＝ 全量50mL（0.06mg/mL）※50kgの黄金比",
-        start:"2.5 mL/h（＝ 0.05γ）で開始",
-        titrate:"5 mL/h（0.1γ）→ 10 mL/h（0.2γ）と漸増。"
+        prep:"3A(3mg/3mL) ＋ 生食47mL ＝ 全量50mL（0.06mg/mL＝60µg/mL）※50kgの黄金比",
+        calc:{ conc:60, doses:[0.05,0.1,0.2,0.3,0.5], start:0.05, peripheralMax:0.1 },
+        titrate:"目標 MAP 65mmHg まで、1〜2 mL/h ずつ（数分〜10分ごと）調整。",
+        note:"【末梢ルート】目安 0.1γ まで（できるだけ太い・中枢側の静脈で短時間）。超えそう／長引くなら中心静脈を確保。漏出は組織壊死のリスク。\n【中心静脈】0.3γを超える高用量も可。0.2〜0.3γで反応不十分ならバソプレシン併用を検討、難治例は0.5γ以上も。",
+        tip:"この希釈なら ポンプ速度(mL/h) ≒ γ × 体重(kg)。"
       },
       {
         name:"バソプレシン", brand:"ピトレシン", tag:"2nd line",
@@ -555,12 +582,60 @@ function drugHTML(d){
   return `<div class="drug">
     <div class="drug-name">${esc(d.name)}${d.brand?`<span class="brand">（${esc(d.brand)}）</span>`:''}${tags(d.tag)}</div>
     ${field('希釈・準備',d.prep)}
+    ${d.calc?calcHTML(d):''}
     ${d.start?`<div class="start"><span class="lab">初期投与</span><span class="v">${escn(d.start)}</span></div>`:''}
     ${field('調整',d.titrate)}
     ${d.note?field('適応・補足',d.note):''}
     ${d.warn?`<div class="box warn"><span class="h">⚠️ 注意</span>${escn(d.warn)}</div>`:''}
     ${d.tip?`<div class="box tip"><span class="h">💡 コツ</span>${escn(d.tip)}</div>`:''}
   </div>`;
+}
+
+// 体重（共有・記憶できる環境では保持）
+let patientWeight=50;
+try{const w=parseFloat(localStorage.getItem('km-weight'));if(w>0)patientWeight=w;}catch(e){}
+function saveWeight(w){try{localStorage.setItem('km-weight',w)}catch(e){}}
+
+function calcHTML(d){
+  const c=d.calc;
+  return `<div class="calc" data-conc="${c.conc}" data-doses="${c.doses.join(',')}" data-start="${c.start??c.doses[0]}" data-pmax="${c.peripheralMax??''}">
+    <div class="calc-top"><span class="lab">⚖️ 体重で自動計算</span>
+      <input class="calc-w" type="number" inputmode="decimal" min="1" max="300" step="1" aria-label="体重 kg">
+      <span class="unit">kg</span></div>
+    <div class="calc-out"></div>
+  </div>`;
+}
+function computeCalc(el){
+  const conc=+el.dataset.conc;
+  const doses=el.dataset.doses.split(',').map(Number);
+  const sd=+el.dataset.start;
+  const pmax=parseFloat(el.dataset.pmax);
+  const hasRoute=!isNaN(pmax);
+  const kg=parseFloat(el.querySelector('.calc-w').value);
+  const out=el.querySelector('.calc-out');
+  if(!(kg>0)){out.innerHTML='<div class="calc-note">体重を入力してください</div>';return;}
+  const rows=doses.map(g=>{
+    const mlh=g*kg*60/conc, mgh=g*kg*60/1000, st=Math.abs(g-sd)<1e-9;
+    const route=hasRoute?`<td class="route">${g<=pmax+1e-9?'<span class="rt rt-p">末梢可</span>':'<span class="rt rt-c">要CV</span>'}</td>`:'';
+    return `<tr class="${st?'startrow':''}"><td>${g} γ${st?'<span class="stb">開始</span>':''}</td>`+
+      `<td class="rate">${mlh.toFixed(1)}<small> mL/h</small><div class="mgh">${mgh.toFixed(2)} mg/h</div></td>`+
+      route+`</tr>`;
+  }).join('');
+  out.innerHTML=`<table><tbody>${rows}</tbody></table>`;
+}
+function wireCalcs(){
+  const els=[...document.querySelectorAll('.calc')];
+  els.forEach(el=>{
+    const inp=el.querySelector('.calc-w');
+    inp.value=patientWeight;
+    computeCalc(el);
+    inp.addEventListener('input',()=>{
+      const v=parseFloat(inp.value);
+      if(v>0){patientWeight=v;saveWeight(v);}
+      computeCalc(el);
+      els.forEach(o=>{if(o!==el){if(v>0)o.querySelector('.calc-w').value=v;computeCalc(o);}});
+    });
+  });
 }
 
 function matches(s){
@@ -584,6 +659,7 @@ function render(){
     ${s.point?`<div class="box info"><span class="h">💊 使い分け・ポイント</span>${escn(s.point)}</div>`:''}
     ${s.drugs.map(drugHTML).join('')}
   </section>`).join('');
+  wireCalcs();
 }
 
 $search.oninput=()=>{q=$search.value.trim();$clear.style.display=q?'block':'none';render();};

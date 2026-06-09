@@ -18,7 +18,7 @@
   --warn-bg:#3a1d1d; --warn-line:#e5534b; --warn-txt:#ff9b94;
   --tip-bg:#2a2410; --tip-line:#d4a72c; --tip-txt:#f2d06b;
   /* カテゴリ色（臓器系統で6グループ） */
-  --c-循環器:#539bf5; --c-神経:#a371f7; --c-呼吸器:#1f9e8f;
+  --c-CPA:#f0506e; --c-循環器:#539bf5; --c-神経:#a371f7; --c-呼吸器:#1f9e8f;
   --c-消化器:#c9761f; --c-代謝内分泌:#c2548a; --c-ショック:#e5534b;
 }
 [data-theme="light"]{
@@ -70,6 +70,7 @@ header{
   border:1px solid var(--line);background:var(--bg2);color:var(--sub);cursor:pointer;white-space:nowrap}
 .chip.on{color:#fff;border-color:transparent}
 .chip[data-cat="all"].on{background:var(--txt);color:var(--bg)}
+.chip[data-cat="CPA"].on{background:var(--c-CPA)}
 .chip[data-cat="循環器"].on{background:var(--c-循環器)}
 .chip[data-cat="神経"].on{background:var(--c-神経)}
 .chip[data-cat="呼吸器"].on{background:var(--c-呼吸器)}
@@ -81,6 +82,7 @@ header{
 main{padding:14px 14px 40px;max-width:760px;margin:0 auto}
 .scn{background:var(--card);border:1px solid var(--line);border-left-width:5px;
   border-radius:14px;padding:14px 14px 6px;margin-bottom:14px}
+.scn[data-cat="CPA"]{border-left-color:var(--c-CPA)}
 .scn[data-cat="循環器"]{border-left-color:var(--c-循環器)}
 .scn[data-cat="神経"]{border-left-color:var(--c-神経)}
 .scn[data-cat="呼吸器"]{border-left-color:var(--c-呼吸器)}
@@ -90,6 +92,7 @@ main{padding:14px 14px 40px;max-width:760px;margin:0 auto}
 .scn-head{margin-bottom:12px}
 .catbadge{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:6px;
   color:#fff;letter-spacing:.04em;margin-bottom:6px}
+.catbadge[data-cat="CPA"]{background:var(--c-CPA)}
 .catbadge[data-cat="循環器"]{background:var(--c-循環器)}
 .catbadge[data-cat="神経"]{background:var(--c-神経)}
 .catbadge[data-cat="呼吸器"]{background:var(--c-呼吸器)}
@@ -206,9 +209,55 @@ footer .warnbar{background:var(--warn-bg);border:1px solid var(--warn-line);colo
      note    : 補足・適応
    ============================================================ */
 
-const CATS = ["循環器","ショック","呼吸器","神経","代謝内分泌","消化器"];
+const CATS = ["CPA","循環器","ショック","呼吸器","神経","代謝内分泌","消化器"];
 
 const DATA = [
+  {
+    category:"CPA",
+    scenario:"心肺停止（CPA）／ ACLS",
+    goal:"絶え間ない高品質CPRを土台に、波形で2ルートに分けて対応しROSCを目指す",
+    point:"2分ごとのリズムチェックで分岐する。\n・ショック適応（VF／脈なしVT）→ 除細動を繰り返し、抗不整脈薬を重ねる\n・ショック非適応（PEA／心静止）→ ショックせず、早期エピネフリン＋原因検索（4H5T）",
+    drugs:[
+      {
+        name:"全波形共通：高品質CPR", startLabel:"土台",
+        start:"絶え間ない胸骨圧迫。中断は10秒以内",
+        note:"速さ100〜120回/分／深さ約5cm（6cmは超えない）／2分（1サイクル）ごとに圧迫者を交代／リズムチェック・エコーでの中断は10秒以内。"
+      },
+      {
+        name:"ショック適応：VF／脈なしVT", tag:"除細動＋抗不整脈", startLabel:"まず",
+        start:"波形確認後ただちにショック（二相性150〜200J）→ 脈は確認せず即CPR2分",
+        note:"1巡目：1回目ショック → CPR2分\n2巡目：2回目ショック →（この巡で）エピネフリン1mg、以後3〜5分毎\n3巡目：3回目ショック →（この巡で）アミオダロン300mg（またはリドカイン1〜1.5mg/kg）\n4巡目以降：継続ならアミオダロン150mgを追加",
+        warn:"ショック直後は脈確認をせず、ただちに胸骨圧迫を再開する。"
+      },
+      {
+        name:"ショック非適応：PEA／心静止", tag:"早期エピネフリン＋原因検索", startLabel:"まず",
+        start:"ルート確保でき次第、できるだけ早くエピネフリン1mg",
+        note:"ショックは行わず高品質CPRを2分継続→リズムチェックを反復。根本原因（4H5T）を解決しない限りROSCしないため、CPRを回しながら同時に評価・治療する。"
+      },
+      {
+        name:"エピネフリン", brand:"ボスミン", tag:"全CPA共通",
+        prep:"1A（1mg/1mL）を原液で",
+        start:"1mg を IV/IO、3〜5分毎（1サイクル飛ばし）に反復。毎回 生食20mLフラッシュ＋四肢挙上",
+        note:"VF/VTでは2巡目（2回目ショック後）から、PEA/心静止ではできるだけ早期から開始。"
+      },
+      {
+        name:"アミオダロン", brand:"アンカロン", tag:"VF／脈なしVT（難治性）",
+        prep:"初回300mg（2A）を原液のまま",
+        start:"3巡目（3回目ショック後）に300mg をボーラス IV/IO → 直後に生食フラッシュ",
+        titrate:"継続するVF/VTには2回目として150mgを追加。",
+        warn:"持続静注へ移行する場合は、生食では結晶化するため必ず5%ブドウ糖で希釈する。",
+        tip:"代替としてリドカイン1〜1.5mg/kg も可。"
+      },
+      {
+        name:"可逆的な原因の検索：4H5T", tag:"PEA/心静止・遷延例で必須",
+        note:"【4H】低酸素（Hypoxia）／低体温（Hypothermia）／循環血液量低下・出血（Hypovolemia）／低・高K・代謝異常（Hypo-/Hyperkalemia）\n【5T】緊張性気胸（Tension pneumothorax）／心タンポナーデ（Tamponade）／中毒（Toxins）／肺塞栓（Thrombosis: pulmonary）／急性冠症候群＝冠動脈血栓（Thrombosis: coronary）"
+      },
+      {
+        name:"気道管理・モニター（PETCO2）",
+        note:"挿管前：胸骨圧迫と換気は30:2。\n挿管後：胸骨圧迫は中断なしで継続、換気は6秒に1回（分10回）で非同期（過換気に注意）。\nPETCO2<10mmHg：圧迫の質が不十分の可能性→CPRを見直す。\nPETCO2が急に35〜40mmHg以上へ上昇：ROSC（自己心拍再開）の強力なサイン。"
+      }
+    ]
+  },
   {
     category:"神経",
     scenario:"脳出血・くも膜下出血の降圧",
@@ -361,52 +410,6 @@ const DATA = [
         prep:"1A(150mg) ＋ 5%ブドウ糖液 100mL",
         start:"10分間かけて静注（ポンプなら 600 mL/h）",
         warn:"生食と混ぜると結晶化する。必ず5%ブドウ糖液（ツッカー）で希釈すること。"
-      }
-    ]
-  },
-  {
-    category:"循環器",
-    scenario:"心肺停止（CPA）／ ACLS",
-    goal:"絶え間ない高品質CPRを土台に、波形で2ルートに分けて対応しROSCを目指す",
-    point:"2分ごとのリズムチェックで分岐する。\n・ショック適応（VF／脈なしVT）→ 除細動を繰り返し、抗不整脈薬を重ねる\n・ショック非適応（PEA／心静止）→ ショックせず、早期エピネフリン＋原因検索（4H5T）",
-    drugs:[
-      {
-        name:"全波形共通：高品質CPR", startLabel:"土台",
-        start:"絶え間ない胸骨圧迫。中断は10秒以内",
-        note:"速さ100〜120回/分／深さ約5cm（6cmは超えない）／2分（1サイクル）ごとに圧迫者を交代／リズムチェック・エコーでの中断は10秒以内。"
-      },
-      {
-        name:"ショック適応：VF／脈なしVT", tag:"除細動＋抗不整脈", startLabel:"まず",
-        start:"波形確認後ただちにショック（二相性150〜200J）→ 脈は確認せず即CPR2分",
-        note:"1巡目：1回目ショック → CPR2分\n2巡目：2回目ショック →（この巡で）エピネフリン1mg、以後3〜5分毎\n3巡目：3回目ショック →（この巡で）アミオダロン300mg（またはリドカイン1〜1.5mg/kg）\n4巡目以降：継続ならアミオダロン150mgを追加",
-        warn:"ショック直後は脈確認をせず、ただちに胸骨圧迫を再開する。"
-      },
-      {
-        name:"ショック非適応：PEA／心静止", tag:"早期エピネフリン＋原因検索", startLabel:"まず",
-        start:"ルート確保でき次第、できるだけ早くエピネフリン1mg",
-        note:"ショックは行わず高品質CPRを2分継続→リズムチェックを反復。根本原因（4H5T）を解決しない限りROSCしないため、CPRを回しながら同時に評価・治療する。"
-      },
-      {
-        name:"エピネフリン", brand:"ボスミン", tag:"全CPA共通",
-        prep:"1A（1mg/1mL）を原液で",
-        start:"1mg を IV/IO、3〜5分毎（1サイクル飛ばし）に反復。毎回 生食20mLフラッシュ＋四肢挙上",
-        note:"VF/VTでは2巡目（2回目ショック後）から、PEA/心静止ではできるだけ早期から開始。"
-      },
-      {
-        name:"アミオダロン", brand:"アンカロン", tag:"VF／脈なしVT（難治性）",
-        prep:"初回300mg（2A）を原液のまま",
-        start:"3巡目（3回目ショック後）に300mg をボーラス IV/IO → 直後に生食フラッシュ",
-        titrate:"継続するVF/VTには2回目として150mgを追加。",
-        warn:"持続静注へ移行する場合は、生食では結晶化するため必ず5%ブドウ糖で希釈する。",
-        tip:"代替としてリドカイン1〜1.5mg/kg も可。"
-      },
-      {
-        name:"可逆的な原因の検索：4H5T", tag:"PEA/心静止・遷延例で必須",
-        note:"【4H】低酸素（Hypoxia）／低体温（Hypothermia）／循環血液量低下・出血（Hypovolemia）／低・高K・代謝異常（Hypo-/Hyperkalemia）\n【5T】緊張性気胸（Tension pneumothorax）／心タンポナーデ（Tamponade）／中毒（Toxins）／肺塞栓（Thrombosis: pulmonary）／急性冠症候群＝冠動脈血栓（Thrombosis: coronary）"
-      },
-      {
-        name:"気道管理・モニター（PETCO2）",
-        note:"挿管前：胸骨圧迫と換気は30:2。\n挿管後：胸骨圧迫は中断なしで継続、換気は6秒に1回（分10回）で非同期（過換気に注意）。\nPETCO2<10mmHg：圧迫の質が不十分の可能性→CPRを見直す。\nPETCO2が急に35〜40mmHg以上へ上昇：ROSC（自己心拍再開）の強力なサイン。"
       }
     ]
   },

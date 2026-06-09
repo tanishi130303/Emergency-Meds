@@ -195,6 +195,7 @@ footer .warnbar{background:var(--warn-bg);border:1px solid var(--warn-line);colo
      tag     : 小さなラベル。複数なら配列でも可 例:"前負荷軽減" / ["1st","昇圧"]
      prep    : 希釈・準備
      start   : ★初期投与（最重要・緑で強調表示）
+     startLabel : start欄の見出し（任意・既定は「初期投与」。例: "まず" "土台" "アクション"）
      titrate : 調整・漸増
      warn    : ⚠️注意（赤）
      tip     : 💡コツ（黄）
@@ -352,7 +353,7 @@ const DATA = [
   },
   {
     category:"循環器",
-    scenario:"心室性不整脈：脈ありVT（血圧保持）",
+    scenario:"心室頻拍：脈あり VT（血圧保持・非CPA）",
     goal:"致死性不整脈の停止・再発予防",
     drugs:[
       {
@@ -365,13 +366,47 @@ const DATA = [
   },
   {
     category:"循環器",
-    scenario:"心室性不整脈：CPA（Vf／脈なしVT）",
-    goal:"致死性不整脈の停止",
+    scenario:"心肺停止（CPA）／ ACLS",
+    goal:"絶え間ない高品質CPRを土台に、波形で2ルートに分けて対応しROSCを目指す",
+    point:"2分ごとのリズムチェックで分岐する。\n・ショック適応（VF／脈なしVT）→ 除細動を繰り返し、抗不整脈薬を重ねる\n・ショック非適応（PEA／心静止）→ ショックせず、早期エピネフリン＋原因検索（4H5T）",
     drugs:[
       {
-        name:"アミオダロン", brand:"アンカロン",
-        prep:"2A(300mg) を原液のまま",
-        start:"ボーラス（急速静注）＋ 直後に生食フラッシュ"
+        name:"全波形共通：高品質CPR", startLabel:"土台",
+        start:"絶え間ない胸骨圧迫。中断は10秒以内",
+        note:"速さ100〜120回/分／深さ約5cm（6cmは超えない）／2分（1サイクル）ごとに圧迫者を交代／リズムチェック・エコーでの中断は10秒以内。"
+      },
+      {
+        name:"ショック適応：VF／脈なしVT", tag:"除細動＋抗不整脈", startLabel:"まず",
+        start:"波形確認後ただちにショック（二相性150〜200J）→ 脈は確認せず即CPR2分",
+        note:"1巡目：1回目ショック → CPR2分\n2巡目：2回目ショック →（この巡で）エピネフリン1mg、以後3〜5分毎\n3巡目：3回目ショック →（この巡で）アミオダロン300mg（またはリドカイン1〜1.5mg/kg）\n4巡目以降：継続ならアミオダロン150mgを追加",
+        warn:"ショック直後は脈確認をせず、ただちに胸骨圧迫を再開する。"
+      },
+      {
+        name:"ショック非適応：PEA／心静止", tag:"早期エピネフリン＋原因検索", startLabel:"まず",
+        start:"ルート確保でき次第、できるだけ早くエピネフリン1mg",
+        note:"ショックは行わず高品質CPRを2分継続→リズムチェックを反復。根本原因（4H5T）を解決しない限りROSCしないため、CPRを回しながら同時に評価・治療する。"
+      },
+      {
+        name:"エピネフリン", brand:"ボスミン", tag:"全CPA共通",
+        prep:"1A（1mg/1mL）を原液で",
+        start:"1mg を IV/IO、3〜5分毎（1サイクル飛ばし）に反復。毎回 生食20mLフラッシュ＋四肢挙上",
+        note:"VF/VTでは2巡目（2回目ショック後）から、PEA/心静止ではできるだけ早期から開始。"
+      },
+      {
+        name:"アミオダロン", brand:"アンカロン", tag:"VF／脈なしVT（難治性）",
+        prep:"初回300mg（2A）を原液のまま",
+        start:"3巡目（3回目ショック後）に300mg をボーラス IV/IO → 直後に生食フラッシュ",
+        titrate:"継続するVF/VTには2回目として150mgを追加。",
+        warn:"持続静注へ移行する場合は、生食では結晶化するため必ず5%ブドウ糖で希釈する。",
+        tip:"代替としてリドカイン1〜1.5mg/kg も可。"
+      },
+      {
+        name:"可逆的な原因の検索：4H5T", tag:"PEA/心静止・遷延例で必須",
+        note:"【4H】低酸素（Hypoxia）／低体温（Hypothermia）／循環血液量低下・出血（Hypovolemia）／低・高K・代謝異常（Hypo-/Hyperkalemia）\n【5T】緊張性気胸（Tension pneumothorax）／心タンポナーデ（Tamponade）／中毒（Toxins）／肺塞栓（Thrombosis: pulmonary）／急性冠症候群＝冠動脈血栓（Thrombosis: coronary）"
+      },
+      {
+        name:"気道管理・モニター（PETCO2）",
+        note:"挿管前：胸骨圧迫と換気は30:2。\n挿管後：胸骨圧迫は中断なしで継続、換気は6秒に1回（分10回）で非同期（過換気に注意）。\nPETCO2<10mmHg：圧迫の質が不十分の可能性→CPRを見直す。\nPETCO2が急に35〜40mmHg以上へ上昇：ROSC（自己心拍再開）の強力なサイン。"
       }
     ]
   },
@@ -583,7 +618,7 @@ function drugHTML(d){
     <div class="drug-name">${esc(d.name)}${d.brand?`<span class="brand">（${esc(d.brand)}）</span>`:''}${tags(d.tag)}</div>
     ${field('希釈・準備',d.prep)}
     ${d.calc?calcHTML(d):''}
-    ${d.start?`<div class="start"><span class="lab">初期投与</span><span class="v">${escn(d.start)}</span></div>`:''}
+    ${d.start?`<div class="start"><span class="lab">${esc(d.startLabel||'初期投与')}</span><span class="v">${escn(d.start)}</span></div>`:''}
     ${field('調整',d.titrate)}
     ${d.note?field('適応・補足',d.note):''}
     ${d.warn?`<div class="box warn"><span class="h">⚠️ 注意</span>${escn(d.warn)}</div>`:''}
